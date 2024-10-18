@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Game</title>
+    <style>
+        /* Center the canvas container */
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0; /* Light background for the entire page */
+        }
+
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ADD8E6; /* Same light blue background as the game */
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Optional: add shadow for better appearance */
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <canvas id="flappyCanvas" width="320" height="480"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('flappyCanvas');
+const context = canvas.getContext('2d');
+
+// Bird properties
+const bird = { x: 50, y: 150, width: 20, height: 20, gravity: 0.4, lift: -8, velocity: 0 };
+
+// Pipes properties
+let pipes = [];
+let pipeSpeed = 2;
+let pipeWidth = 40;
+let pipeGap = 120;
+
+// Game variables
+let score = 0;
+let isGameOver = false;
+
+// Add pipes at regular intervals
+function addPipe() {
+    const topHeight = Math.floor(Math.random() * (canvas.height - pipeGap - 50)) + 20;
+    pipes.push({ x: canvas.width, y: 0, height: topHeight });
+}
+
+// Move bird
+function updateBird() {
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+
+    if (bird.y > canvas.height - bird.height || bird.y < 0) {
+        gameOver();
+    }
+}
+
+// Move pipes and handle collisions
+function updatePipes() {
+    pipes.forEach(pipe => {
+        pipe.x -= pipeSpeed;
+
+        if (
+            bird.x < pipe.x + pipeWidth &&
+            bird.x + bird.width > pipe.x &&
+            (bird.y < pipe.height || bird.y > pipe.height + pipeGap)
+        ) {
+            gameOver();
+        }
+
+        if (pipe.x + pipeWidth < 0) {
+            pipes.shift();
+            score++;
+        }
+    });
+}
+
+// Draw the bird, pipes, score, and background
+function draw() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    context.fillStyle = '#ADD8E6'; // Sky background
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.fillStyle = 'yellow';
+    context.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+    pipes.forEach(pipe => {
+        context.fillStyle = 'green';
+        context.fillRect(pipe.x, pipe.y, pipeWidth, pipe.height);
+        context.fillRect(pipe.x, pipe.height + pipeGap, pipeWidth, canvas.height - pipe.height - pipeGap);
+    });
+
+    // Centered score display
+    context.font = '20px Arial';
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    context.fillText(`Score: ${score}`, canvas.width / 2, 30);
+}
+
+// Game over function
+function gameOver() {
+    isGameOver = true;
+    alert(`Game Over! Your score: ${score}`);
+    document.location.reload();
+}
+
+// Bird jump on spacebar press
+document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' && !isGameOver) {
+        bird.velocity = bird.lift;
+    }
+});
+
+// Main game loop
+function update() {
+    if (!isGameOver) {
+        updateBird();
+        updatePipes();
+        draw();
+    }
+    requestAnimationFrame(update);
+}
+
+// Start the game: add initial pipe and start the loop
+addPipe();
+setInterval(addPipe, 3000);
+update();
+</script>
+
+</body>
+</html>
